@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <title>聚久屋蔬食坊｜2026 馬年年菜預購</title>
+    <style>
+        :root {
+            --primary-red: #8b0000;
+            --deep-red: #4a0404;
+            --gold: #d4af37;
+            --cream: #fdfaf5;
+            --text: #333333;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            margin: 0; font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            background-color: var(--deep-red); color: var(--text); line-height: 1.6;
+        }
+
+        /* 防止藍色文字 */
+        a, span, div, p { color: inherit; text-decoration: none; }
+
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; position: relative; z-index: 1; }
+        
+        /* 裝飾背板 */
+        .bg-pattern {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 30-30 30L0 30z' fill='%23d4af37' fill-opacity='0.05'/%3E%3C/svg%3E");
+            z-index: 0; pointer-events: none;
+        }
+
+        /* 通用卡片 */
+        .card {
+            background: var(--cream); border-radius: 16px; padding: 20px;
+            margin-bottom: 20px; border: 1px solid var(--gold);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        header { text-align: center; color: var(--gold); padding: 30px 0; }
+        #store-title { cursor: pointer; user-select: none; letter-spacing: 4px; font-size: 2rem; margin: 0; transition: transform 0.2s; }
+        #store-title:active { transform: scale(0.95); }
+
+        .category-header {
+            border-left: 5px solid var(--gold); padding-left: 12px;
+            margin: 25px 0 15px; color: var(--gold); font-size: 1.3rem; font-weight: bold;
+        }
+
+        /* 商品列表樣式 */
+        .product-item { display: flex; gap: 15px; padding: 15px 0; border-bottom: 1px solid #ddd; }
+        .product-item:last-child { border-bottom: none; }
+        .p-img { width: 90px; height: 90px; border-radius: 8px; object-fit: cover; background: #eee; flex-shrink: 0; border: 1px solid var(--gold); }
+        .p-info { flex-grow: 1; }
+        .p-name { font-weight: bold; font-size: 1.1rem; display: block; color: var(--deep-red); }
+        .p-price { color: #b00; font-weight: bold; font-size: 1rem; margin: 4px 0; display: block; }
+        .p-desc { font-size: 0.85rem; color: #666; margin-top: 4px; line-height: 1.4; }
+        
+        .qty-box { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+        .btn-qty {
+            width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--gold);
+            background: #fff; cursor: pointer; font-size: 1.2rem;
+            display: flex; align-items: center; justify-content: center; color: var(--deep-red);
+        }
+
+        /* 底部結算列 */
+        .footer-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: var(--cream); padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.2); z-index: 100; border-top: 2px solid var(--gold);
+        }
+        .total-text { font-size: 1.2rem; font-weight: bold; color: var(--deep-red); }
+        .btn-main {
+            background: var(--primary-red); color: var(--gold); border: none;
+            padding: 12px 28px; border-radius: 25px; font-weight: bold; cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-main:disabled { background: #999; color: #ccc; cursor: not-allowed; }
+
+        /* 後台管理頁面 */
+        #admin-panel { display: none; background: #f4f4f4; color: #333; min-height: 100vh; padding: 20px; z-index: 200; position: relative; }
+        .debug-box {
+            background: #222; color: #0f0; padding: 15px; border-radius: 8px;
+            font-family: monospace; font-size: 0.8rem; margin: 15px 0; line-height: 1.5;
+        }
+        .debug-box summary { cursor: pointer; color: #fff; margin-bottom: 5px; outline: none; }
+        .admin-table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 10px; font-size: 0.9rem; }
+        .admin-table th, .admin-table td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        
+        input, select, textarea { width: 100%; padding: 10px; margin: 8px 0 18px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
+        .hidden { display: none; }
+
+        /* 完成頁面 */
+        #success-page { display: none; text-align: center; }
+        .qr-img { max-width: 200px; margin: 15px auto; border: 2px solid var(--gold); padding: 5px; background: #fff; }
+
+    </style>
+</head>
+<body>
+
+<div class="bg-pattern"></div>
+
+<div id="front-panel">
+    <div class="container">
+        <header>
+            <h1 id="store-title">聚久屋蔬食坊</h1>
+            <div style="letter-spacing: 2px; color: var(--gold); font-weight: bold;">2026 馬到成功．蔬食年菜預購</div>
+        </header>
+
+        <div id="front-products-container">
+            </div>
+
+        <div class="card">
+            <h3>訂購人資訊</h3>
+            <label>姓名 *</label>
+            <input type="text" id="order-name" placeholder="請填寫收件人姓名">
+            <label>電話 * (至少 9 碼數字)</label>
+            <input type="tel" id="order-phone" placeholder="例如: 0912345678" maxlength="15">
+        </div>
+
+        <div style="height: 100px;"></div> </div>
+
+    <div class="footer-bar">
+        <div class="total-text">應付總額: $<span id="grand-total">0</span></div>
+        <button class="btn-main" id="btn-submit-order" onclick="submitOrder()">送出預購單</button>
+    </div>
+</div>
+
+<div id="success-page" class="container">
+    <div class="card">
+        <h2 style="color: var(--primary-red);">預購訂單已送出！</h2>
+        <p>您的訂單編號：<strong id="res-oid" style="color: blue; font-size: 1.2rem;"></strong></p>
+        <div id="res-items" style="text-align: left; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin: 15px 0;"></div>
+        <p style="font-size: 1.3rem; font-weight: bold;">應付總計：$<span id="res-total"></span></p>
+        <hr style="border: 0; border-top: 1px solid var(--gold); margin: 20px 0;">
+        <h3>匯款資訊</h3>
+        <p id="res-remit-text" style="white-space: pre-wrap; font-weight: bold;"></p>
+        <div id="qr-area"></div>
+        <br>
+        <button class="btn-main" onclick="location.reload()">返回首頁</button>
+    </div>
+</div>
+
+<div id="admin-panel">
+    <div style="max-width: 800px; margin: 0 auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0;">後台管理面板</h2>
+            <button class="btn-main" onclick="exitAdmin()">完成編輯 / 返回預購單</button>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0">系統可觀測 Debug</h3>
+            <div class="debug-box" id="debug-info">
+                <div>資料來源: jjw_products_v1</div>
+                <div>商品筆數: <span id="dbg-count">0</span></div>
+                <div>最後存檔: <span id="dbg-time">-</span></div>
+                <div>存儲估計: <span id="dbg-size">0 KB</span></div>
+                <div style="border-top: 1px solid #444; margin-top: 5px; padding-top: 5px;">
+                    <div>最後新增狀態: <span id="dbg-status">ready</span></div>
+                    <div>錯誤訊息: <span id="dbg-error" style="color: #ff4444;">none</span></div>
+                </div>
+                <details style="margin-top: 10px;">
+                    <summary>顯示原始 JSON 數據</summary>
+                    <textarea id="dbg-json" readonly style="width: 100%; height: 150px; background: #000; color: #0f0; border: none; font-size: 10px;"></textarea>
+                </details>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 id="form-title">新增 / 編輯商品</h3>
+            <form id="product-form" onsubmit="event.preventDefault();">
+                <input type="hidden" id="edit-id">
+                <label>分類 *</label>
+                <select id="p-category">
+                    <option value="團圓限定組合">團圓限定組合</option>
+                    <option value="幸福加購專區">幸福加購專區</option>
+                    <option value="新春單品料理">新春單品料理</option>
+                </select>
+                <label>名稱 *</label>
+                <input type="text" id="p-name" placeholder="請輸入商品名稱">
+                <label>價格 *</label>
+                <input type="number" id="p-price" placeholder="例如: 1280">
+                <label>描述文字</label>
+                <textarea id="p-desc" rows="2" placeholder="商品的特色說明..."></textarea>
+                <label><input type="checkbox" id="p-show-desc" checked> 在前台顯示描述</label>
+                <br><br>
+                <label>商品照片 (會自動縮圖優化)</label>
+                <input type="file" id="p-file" accept="image/*">
+                
+                <button type="button" class="btn-main" id="btn-save-product" style="width: 100%; font-size: 1.2rem;" onclick="handleSaveProduct()">立即儲存商品</button>
+                <button type="button" id="btn-cancel-edit" class="hidden" onclick="resetForm()" style="width: 100%; margin-top: 10px; padding: 10px; border-radius: 25px; border: 1px solid #999;">取消編輯</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3>商品排序與管理</h3>
+            <div style="overflow-x: auto;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>排序</th>
+                            <th>分類</th>
+                            <th>名稱</th>
+                            <th>價格</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-product-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>訂單管理</h3>
+            <button class="btn-main" style="background: #28a745; margin-bottom: 10px;" onclick="exportOrders()">匯出所有訂單 (CSV)</button>
+            <div style="overflow-x: auto;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>編號</th>
+                            <th>日期</th>
+                            <th>客戶</th>
+                            <th>金額</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-order-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>匯款設定</h3>
+            <label>匯款說明文字</label>
+            <textarea id="s-remit" rows="3"></textarea>
+            <label>匯款 QR Code (圖片)</label>
+            <input type="file" id="s-qr-file" accept="image/*">
+            <button class="btn-main" onclick="saveSettings()">儲存設定</button>
+            <hr style="margin: 25px 0;">
+            <button class="btn-main" style="background: #666;" onclick="factoryReset()">初始化系統資料 (2026jjw)</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/**
+ * 一、核心資料規範與存取
+ */
+const KEYS = {
+    PRODUCTS: 'jjw_products_v1',
+    ORDERS: 'jjw_orders_v1',
+    SETTINGS: 'jjw_settings_v1',
+    INIT: 'jjw_initialized_v1'
+};
+
+const loadProducts = () => JSON.parse(localStorage.getItem(KEYS.PRODUCTS) || "[]");
+const saveProducts = (data) => {
+    try {
+        localStorage.setItem(KEYS.PRODUCTS, JSON.stringify(data));
+        updateDebugUI(data, "success");
+        return true;
+    } catch (e) {
+        console.error("Storage fail:", e);
+        const msg = (e.name === 'QuotaExceededError') ? "儲存空間已滿！請刪除部分商品或縮小圖片再試。" : "存檔失敗，請檢查瀏覽器設定。";
+        updateDebugUI(data, "quotaExceeded", msg);
+        alert(msg);
+        return false;
+    }
+};
+
+/**
+ * 二、強化版圖片處理流程 (防卡死、防超限)
+ */
+async function processImage(file) {
+    if (!file) return "";
+    
+    // 限制原始檔案不得超過 10MB
+    if (file.size > 10 * 1024 * 1024) throw new Error("原始圖片太大，請先自行壓縮。");
+
+    return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("讀取超時 (8秒)")), 8000);
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const max_size = 800; // 最大邊長
+
+                if (width > height) {
+                    if (width > max_size) { height *= max_size / width; width = max_size; }
+                } else {
+                    if (height > max_size) { width *= max_size / height; height = max_size; }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+                clearTimeout(timeout);
+                resolve(dataUrl);
+            };
+            img.onerror = () => reject(new Error("圖片格式錯誤"));
+            img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error("檔案讀取失敗"));
+        reader.onabort = () => reject(new Error("讀取被中止"));
+        reader.readAsDataURL(file);
+    });
+}
+
+/**
+ * 三、業務邏輯：商品管理
+ */
+async function handleSaveProduct() {
+    const btn = document.getElementById('btn-save-product');
+    const name = document.getElementById('p-name').value.trim();
+    const price = parseInt(document.getElementById('p-price').value);
+    const cat = document.getElementById('p-category').value;
+    const desc = document.getElementById('p-desc').value;
+    const showDesc = document.getElementById('p-show-desc').checked;
+    const file = document.getElementById('p-file').files[0];
+    const editId = document.getElementById('edit-id').value;
+
+    if (!name || isNaN(price)) return alert("請填寫必填欄位 (名稱與價格)");
+
+    // 鎖定 UI
+    btn.disabled = true;
+    btn.innerText = "處理中，請稍候...";
+    updateDebugUI(loadProducts(), "processing");
+
+    try {
+        let photoBase64 = "";
+        if (file) {
+            photoBase64 = await processImage(file);
+        } else if (editId) {
+            // 編輯模式若沒選新圖，保留原圖
+            const oldItem = loadProducts().find(x => x.id === editId);
+            photoBase64 = oldItem ? oldItem.photoBase64 : "";
+        }
+
+        let products = loadProducts();
+        if (editId) {
+            const idx = products.findIndex(x => x.id === editId);
+            if (idx !== -1) {
+                products[idx] = { id: editId, category: cat, name, price, description: desc, showDescription: showDesc, photoBase64 };
+            }
+        } else {
+            const newProduct = {
+                id: "P" + Date.now(),
+                category: cat,
+                name,
+                price,
+                description: desc,
+                showDescription: showDesc,
+                photoBase64
+            };
+            products.push(newProduct);
+        }
+
+        const success = saveProducts(products);
+        if (success) {
+            renderAll();
+            resetForm();
+            if(!editId) alert("商品已成功新增！");
+        }
+    } catch (err) {
+        console.error(err);
+        updateDebugUI(loadProducts(), "failed", err.message);
+        alert("操作失敗: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "立即儲存商品";
+    }
+}
+
+/**
+ * 四、渲染引擎
+ */
+function renderAll() {
+    const products = loadProducts();
+    renderFrontProducts(products);
+    renderAdminProducts(products);
+    renderAdminOrders();
+    updateGrandTotal();
+}
+
+function renderFrontProducts(products) {
+    const container = document.getElementById('front-products-container');
+    container.innerHTML = '';
+    const categories = ['團圓限定組合', '幸福加購專區', '新春單品料理'];
+
+    categories.forEach(cat => {
+        const list = products.filter(p => p.category === cat);
+        if (list.length === 0) return;
+
+        const catDiv = document.createElement('div');
+        catDiv.innerHTML = `<div class="category-header">${cat}</div>`;
+        
+        list.forEach(p => {
+            const item = document.createElement('div');
+            item.className = 'card product-item';
+            const qty = cart[p.id] || 0;
+            item.innerHTML = `
+                <img src="${p.photoBase64 || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mN88B8AAuEB86WzX9YAAAAASUVORK5CYII='}" class="p-img">
+                <div class="p-info">
+                    <span class="p-name">${p.name}</span>
+                    <span class="p-price">$${p.price.toLocaleString()}</span>
+                    ${p.showDescription ? `<div class="p-desc">${p.description}</div>` : ''}
+                    <div class="qty-box">
+                        <button class="btn-qty" onclick="updateCart('${p.id}', -1)">-</button>
+                        <span id="qty-disp-${p.id}" style="font-weight:bold; min-width:24px; text-align:center;">${qty}</span>
+                        <button class="btn-qty" onclick="updateCart('${p.id}', 1)">+</button>
+                    </div>
+                </div>
+            `;
+            catDiv.appendChild(item);
+        });
+        container.appendChild(catDiv);
+    });
+}
+
+function renderAdminProducts(products) {
+    const tbody = document.getElementById('admin-product-tbody');
+    tbody.innerHTML = '';
+    products.forEach((p, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <button onclick="moveItem(${index}, -1)" style="cursor:pointer">↑</button>
+                <button onclick="moveItem(${index}, 1)" style="cursor:pointer">↓</button>
+            </td>
+            <td><small>${p.category}</small></td>
+            <td><strong>${p.name}</strong></td>
+            <td>$${p.price}</td>
+            <td>
+                <button onclick="editItem('${p.id}')">編</button>
+                <button onclick="deleteItem('${p.id}')" style="color:red">刪</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+/**
+ * 五、輔助功能 (購物車、排序、刪除)
+ */
+let cart = {}; 
+function updateCart(pid, delta) {
+    cart[pid] = (cart[pid] || 0) + delta;
+    if (cart[pid] < 0) cart[pid] = 0;
+    document.getElementById(`qty-disp-${pid}`).innerText = cart[pid];
+    updateGrandTotal();
+}
+
+function updateGrandTotal() {
+    const products = loadProducts();
+    let total = 0;
+    for (let id in cart) {
+        const p = products.find(x => x.id === id);
+        if (p) total += p.price * cart[id];
+    }
+    document.getElementById('grand-total').innerText = total.toLocaleString();
+}
+
+function moveItem(idx, step) {
+    let products = loadProducts();
+    const target = idx + step;
+    if (target < 0 || target >= products.length) return;
+    [products[idx], products[target]] = [products[target], products[idx]];
+    saveProducts(products);
+    renderAll();
+}
+
+function deleteItem(id) {
+    if (!confirm("確定要刪除這項商品嗎？")) return;
+    let products = loadProducts();
+    products = products.filter(x => x.id !== id);
+    saveProducts(products);
+    renderAll();
+}
+
+function editItem(id) {
+    const p = loadProducts().find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('edit-id').value = p.id;
+    document.getElementById('p-name').value = p.name;
+    document.getElementById('p-price').value = p.price;
+    document.getElementById('p-category').value = p.category;
+    document.getElementById('p-desc').value = p.description;
+    document.getElementById('p-show-desc').checked = p.showDescription;
+    document.getElementById('form-title').innerText = "編輯商品：" + p.name;
+    document.getElementById('btn-cancel-edit').classList.remove('hidden');
+    window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function resetForm() {
+    document.getElementById('product-form').reset();
+    document.getElementById('edit-id').value = "";
+    document.getElementById('form-title').innerText = "新增 / 編輯商品";
+    document.getElementById('btn-cancel-edit').classList.add('hidden');
+}
+
+/**
+ * 六、Debug UI 更新
+ */
+function updateDebugUI(products, status, error = "none") {
+    document.getElementById('dbg-count').innerText = products.length;
+    document.getElementById('dbg-time').innerText = new Date().toLocaleTimeString();
+    document.getElementById('dbg-status').innerText = status;
+    document.getElementById('dbg-status').style.color = status === "success" ? "#0f0" : (status === "processing" ? "#ff0" : "#f44");
+    document.getElementById('dbg-error').innerText = error;
+    
+    const raw = JSON.stringify(products);
+    document.getElementById('dbg-size').innerText = (raw.length / 1024).toFixed(2) + " KB";
+    document.getElementById('dbg-json').value = raw;
+}
+
+/**
+ * 七、訂單系統
+ */
+function submitOrder() {
+    const name = document.getElementById('order-name').value.trim();
+    const phone = document.getElementById('order-phone').value.trim();
+    const products = loadProducts();
+
+    let items = [];
+    let total = 0;
+    for (let id in cart) {
+        if (cart[id] > 0) {
+            const p = products.find(x => x.id === id);
+            if (p) {
+                items.push({ name: p.name, price: p.price, qty: cart[id], subtotal: p.price * cart[id] });
+                total += p.price * cart[id];
+            }
+        }
+    }
+
+    if (items.length === 0) return alert("購物車目前是空的，請先選擇年菜。");
+    if (!name || phone.length < 9) return alert("請填寫正確的姓名與電話（至少9碼數字）。");
+
+    document.getElementById('btn-submit-order').disabled = true;
+
+    // 產生編號
+    const now = new Date();
+    const dateStr = now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0');
+    const orders = JSON.parse(localStorage.getItem(KEYS.ORDERS) || "[]");
+    const todayNum = orders.filter(o => o.oid.startsWith(dateStr)).length + 1;
+    const oid = `${dateStr}-${String(todayNum).padStart(4, '0')}`;
+
+    const newOrder = {
+        oid,
+        date: now.toLocaleString(),
+        name,
+        phone,
+        items,
+        total
+    };
+
+    orders.push(newOrder);
+    localStorage.setItem(KEYS.ORDERS, JSON.stringify(orders));
+    showSuccess(newOrder);
+}
+
+function showSuccess(order) {
+    document.getElementById('front-panel').style.display = 'none';
+    document.getElementById('success-page').style.display = 'block';
+    document.getElementById('res-oid').innerText = order.oid;
+    document.getElementById('res-total').innerText = order.total.toLocaleString();
+    document.getElementById('res-items').innerHTML = order.items.map(i => `<div>${i.name} x ${i.qty} ($${i.subtotal})</div>`).join('');
+    
+    const settings = JSON.parse(localStorage.getItem(KEYS.SETTINGS) || "{}");
+    document.getElementById('res-remit-text').innerText = settings.remitText || "尚無匯款資訊";
+    if (settings.qrBase64) {
+        document.getElementById('qr-area').innerHTML = `<img src="${settings.qrBase64}" class="qr-img">`;
+    }
+}
+
+/**
+ * 八、隱藏後台邏輯
+ */
+let clickCount = 0;
+let clickTimer;
+document.getElementById('store-title').addEventListener('click', () => {
+    clickCount++;
+    clearTimeout(clickTimer);
+    if (clickCount >= 5) {
+        const pw = prompt("請輸入管理密碼：");
+        if (pw === "2026jjw") {
+            document.getElementById('admin-panel').style.display = 'block';
+            document.getElementById('front-panel').style.display = 'none';
+            renderAll();
+            loadSettings();
+        }
+        clickCount = 0;
+    }
+    clickTimer = setTimeout(() => { clickCount = 0; }, 2000);
+});
+
+function exitAdmin() {
+    document.getElementById('admin-panel').style.display = 'none';
+    document.getElementById('front-panel').style.display = 'block';
+    renderAll();
+}
+
+/**
+ * 九、後台輔助管理 (訂單匯出、設定、重置)
+ */
+function renderAdminOrders() {
+    const orders = JSON.parse(localStorage.getItem(KEYS.ORDERS) || "[]");
+    const tbody = document.getElementById('admin-order-tbody');
+    tbody.innerHTML = '';
+    orders.slice().reverse().forEach((o, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${o.oid}</td>
+            <td><small>${o.date}</small></td>
+            <td>${o.name}<br><small>${o.phone}</small></td>
+            <td>$${o.total.toLocaleString()}</td>
+            <td><button onclick="deleteOrder('${o.oid}')" style="color:red">刪</button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function deleteOrder(oid) {
+    if (!confirm("確定刪除此訂單？")) return;
+    let orders = JSON.parse(localStorage.getItem(KEYS.ORDERS) || "[]");
+    orders = orders.filter(o => o.oid !== oid);
+    localStorage.setItem(KEYS.ORDERS, JSON.stringify(orders));
+    renderAdminOrders();
+}
+
+function exportOrders() {
+    const orders = JSON.parse(localStorage.getItem(KEYS.ORDERS) || "[]");
+    if (orders.length === 0) return alert("沒有訂單可匯出。");
+
+    let csv = "\ufeff訂單編號,日期,客戶姓名,電話,商品明細,總金額\n";
+    orders.forEach(o => {
+        const detail = o.items.map(i => `${i.name}x${i.qty}`).join('; ');
+        csv += `${o.oid},${o.date},${o.name},${o.phone},"${detail}",${o.total}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `聚久屋訂單匯出_${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+}
+
+function loadSettings() {
+    const s = JSON.parse(localStorage.getItem(KEYS.SETTINGS) || "{}");
+    document.getElementById('s-remit').value = s.remitText || "";
+}
+
+async function saveSettings() {
+    const text = document.getElementById('s-remit').value;
+    const file = document.getElementById('s-qr-file').files[0];
+    let qrBase64 = JSON.parse(localStorage.getItem(KEYS.SETTINGS) || "{}").qrBase64 || "";
+
+    if (file) {
+        try {
+            qrBase64 = await processImage(file);
+        } catch (e) {
+            return alert("QR 圖片處理失敗: " + e.message);
+        }
+    }
+
+    localStorage.setItem(KEYS.SETTINGS, JSON.stringify({ remitText: text, qrBase64 }));
+    alert("匯款設定已儲存。");
+}
+
+function factoryReset() {
+    if (prompt("請輸入 2026jjw 以重置所有系統資料：") === "2026jjw") {
+        localStorage.clear();
+        location.reload();
+    }
+}
+
+/**
+ * 十、啟動初始化
+ */
+window.onload = () => {
+    if (!localStorage.getItem(KEYS.INIT)) {
+        const defaultProducts = [
+            { id: "P1", category: "團圓限定組合", name: "馬到成功開運席", price: 3888, description: "含六道主菜與佛跳牆，適合 6-8 人分享。", showDescription: true, photoBase64: "" },
+            { id: "P2", category: "幸福加購專區", name: "手工紅豆年糕", price: 280, description: "純手工古法製作，香 Q 不黏牙。", showDescription: true, photoBase64: "" }
+        ];
+        saveProducts(defaultProducts);
+        localStorage.setItem(KEYS.SETTINGS, JSON.stringify({ remitText: "第一銀行 (007)\n帳號: 123-45678-901\n戶名: 聚久屋蔬食坊" }));
+        localStorage.setItem(KEYS.INIT, "1");
+    }
+    renderAll();
+};
+</script>
+
+</body>
+</html>
